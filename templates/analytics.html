@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div>
+            <h2 data-i18n="analyticsTitle">Analytics and explainable estimates</h2>
+            <p data-i18n="analyticsDescription">Compare illustrative waste inputs and inspect the transparent rule-based risk estimates.</p>
+        </div>
+        <span class="mini-tag" data-i18n="sampleData">Sample data</span>
+    </div>
+    <div class="kpis">
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="monitoredStreets">Monitored streets</span><span class="kpi-icon">📍</span></div><div class="kpi-value">{{ streets|length }}</div><div class="kpi-foot" data-i18n="sampleRecords">Illustrative sample records</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="highRiskStreets">High-risk streets</span><span class="kpi-icon">⚠️</span></div><div class="kpi-value">{{ high_risk_count }}</div><div class="kpi-foot" data-i18n="ruleEstimate">Rule-based estimates</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="medium">Medium risk</span><span class="kpi-icon">◉</span></div><div class="kpi-value">{{ medium_risk_count }}</div><div class="kpi-foot" data-i18n="ruleEstimate">Rule-based estimates</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="low">Low risk</span><span class="kpi-icon">✓</span></div><div class="kpi-value">{{ low_risk_count }}</div><div class="kpi-foot" data-i18n="ruleEstimate">Rule-based estimates</div></article>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel"><div class="panel-title"><div><h3 data-i18n="wasteAnalytics">Waste quantity comparison</h3><p data-i18n="chartSubtitle">Total and organic waste by demonstration street.</p></div></div>    <div class="chart-wrap"><canvas id="wasteChart" data-i18n-aria="chartSubtitle" aria-label="Waste and organic waste comparison chart"></canvas></div></article>
+    <article class="card panel">    <div class="panel-title"><div><h3 data-i18n="riskDistribution">Street risk distribution</h3><p data-i18n="riskDistributionDescription">Counts by the existing transparent score bands.</p></div></div><div class="chart-wrap"><canvas id="riskChart" data-i18n-aria="riskDistributionDescription" aria-label="Risk level distribution chart"></canvas></div></article>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="riskDrivers">How the estimate is formed</h3><p data-i18n="riskDriversDescription">Each condition contributes a fixed, inspectable score.</p></div></div>
+        <div class="priority-list">
+            <div class="priority-item"><span class="priority-name" data-i18n="wasteQuantity">Total waste quantity</span><span class="priority-meta" data-i18n="wasteRule">25 points at 70+, 40 points at 100+</span></div>
+            <div class="priority-item"><span class="priority-name" data-i18n="organicQuantity">Organic waste quantity</span><span class="priority-meta" data-i18n="organicRule">15 points at 35+, 30 points at 60+</span></div>
+            <div class="priority-item"><span class="priority-name" data-i18n="collectionDelay">Collection delay</span><span class="priority-meta" data-i18n="delayRule">15 points at 1 day, 30 points at 2+ days</span></div>
+        </div>
+    </article>
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="streetEstimates">Street estimates</h3><p data-i18n="estimateExplanation">Scores are capped at 100 and grouped into Low, Medium, and High priority bands.</p></div></div>
+        <div class="priority-list">
+            {% for street in streets|sort(attribute='risk_score', reverse=true) %}
+            <div class="priority-item"><span><span class="priority-name">{{ street.street }}</span><br><span class="priority-meta">{{ street.waste }} <span data-i18n="wasteLabel">waste</span> · {{ street.organic }} <span data-i18n="organicLabel">organic</span></span></span><span class="risk-pill {{ street.risk_level|lower }}">{{ street.risk_score }}/100 · <span data-risk="{{ street.risk_level }}">{{ street.risk_level }}</span></span></div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="section"><div class="notice"><strong data-i18n="estimateDisclaimerTitle">Estimate, not a forecast:</strong> <span data-i18n="estimateDisclaimer">These are explainable rule-based estimates from fictional demonstration inputs, not observed trends, methane measurements, trained AI predictions, or future emissions forecasts.</span></div></section>
+{% endblock %}

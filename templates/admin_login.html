@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <article class="card complaint-card" style="max-width: 500px; margin: 0 auto;">
+        <h2 data-i18n="adminLoginTitle">Administrator sign in</h2>
+        <p data-i18n="adminLoginDescription">Sign in with the administrator credentials configured for this installation.</p>
+        <form class="complaint-fields" method="post" action="{{ url_for('admin_login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div><label for="username" data-i18n="username">Username</label><input id="username" name="username" type="text" autocomplete="username" required></div>
+            <div><label for="password" data-i18n="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+            <button class="btn" type="submit" data-i18n="signIn">Sign in</button>
+        </form>
+    </article>
+</section>
+{% endblock %}

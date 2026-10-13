@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-tag" data-i18n="heroTag">Climate action • Smart cities</span>
+        <h2 data-i18n="heroTitle">A cleaner city starts with smarter waste decisions.</h2>
+        <p data-i18n="heroDescription">EcoGuard AI helps prioritise waste collection using illustrative waste quantities, organic waste, and collection delays.</p>
+        <a class="hero-link" href="{{ url_for('simulator_page') }}"><span data-i18n="trySimulator">Open the What-If Simulator</span> <span>↗</span></a>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <div>
+            <h2 data-i18n="citySnapshot">City snapshot</h2>
+            <p data-i18n="snapshotSubtitle">Summary of the demonstration streets currently in the dashboard.</p>
+        </div>
+        <span class="mini-tag" data-i18n="prototype">Prototype</span>
+    </div>
+    <div class="kpis">
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="totalWaste">Total waste units</span><span class="kpi-icon">🗑️</span></div><div class="kpi-value">{{ total_waste }}</div><div class="kpi-foot" data-i18n="acrossStreets">Across monitored streets</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="organicWaste">Organic waste units</span><span class="kpi-icon">🍃</span></div><div class="kpi-value">{{ total_organic }}</div><div class="kpi-foot" data-i18n="needsAttention">Requires appropriate handling</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="highRiskStreets">High-risk streets</span><span class="kpi-icon">⚠️</span></div><div class="kpi-value">{{ high_risk_count }}</div><div class="kpi-foot" data-i18n="prioritiseCollection">Consider prioritising collection</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="totalComplaints">Total complaints</span><span class="kpi-icon">📋</span></div><div class="kpi-value">{{ complaint_summary.total }}</div><div class="kpi-foot"><a href="{{ url_for('complaints_page') }}" data-i18n="communityReports">Community reports received</a></div></article>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="wasteAnalytics">Waste quantity analytics</h3><p data-i18n="chartSubtitle">Compare total and organic waste by street.</p></div><span class="mini-tag" data-i18n="sampleData">Sample data</span></div>
+        <div class="chart-wrap"><canvas id="wasteChart" data-i18n-aria="chartSubtitle" aria-label="Illustrative waste comparison by street"></canvas></div>
+    </article>
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="collectionPriorities">Collection priorities</h3><p data-i18n="riskMonitorSubtitle">Street conditions ranked by the prototype scoring rules.</p></div><a class="mini-tag" href="{{ url_for('risk_monitor') }}" data-i18n="viewAll">View all</a></div>
+        <div class="priority-list" id="priorityList">
+            {% for zone in priority_zones[:4] %}
+            <div class="priority-item">
+                <span><span class="priority-name">{{ zone.street }}</span><br><span class="priority-meta">{{ zone.reasons[0] }}</span></span>
+                <span class="risk-pill {{ zone.risk_level|lower }}">{{ zone.risk_score|int }}/100</span>
+            </div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="section">
+    <article class="card panel">
+        <div class="panel-title">
+            <div>
+                <h3 data-i18n="mapTitle">Waste hotspot map</h3>
+                <p data-i18n="mapOverviewSubtitle">High-priority zones and their current action status.</p>
+            </div>
+            <div class="map-filters" data-i18n-aria="mapTitle" aria-label="Map risk filters">
+                <button class="map-filter active" type="button" data-zone-filter="all" data-i18n="mapFilterAll">All</button>
+                <button class="map-filter" type="button" data-zone-filter="High" data-i18n="riskHigh">High</button>
+                <button class="map-filter" type="button" data-zone-filter="Medium" data-i18n="riskMedium">Medium</button>
+                <button class="map-filter" type="button" data-zone-filter="Low" data-i18n="riskLow">Low</button>
+            </div>
+        </div>
+        <div class="map-shell">
+            <div id="hotspotMap" data-i18n-aria="mapTitle" aria-label="Waste hotspot map" class="risk-map"></div>
+            <div id="mapLoading" class="map-state" data-i18n="mapLoading">Loading hotspot map...</div>
+            <div id="mapEmptyState" class="map-state hidden" data-i18n="mapEmpty">No risk zones match this filter.</div>
+            <div id="mapFallback" class="map-fallback hidden" data-i18n="mapTilesUnavailable">Map tiles are unavailable. Street priorities are still listed below.</div>
+        </div>
+        <div class="map-legend" data-i18n-aria="mapTitle" aria-label="Hotspot legend">
+            <span><i class="legend-dot red"></i><span data-i18n="mapLegendHigh">High risk</span></span>
+            <span><i class="legend-dot amber"></i><span data-i18n="mapLegendMedium">Medium risk</span></span>
+            <span><i class="legend-dot green"></i><span data-i18n="mapLegendLow">Low risk</span></span>
+        </div>
+    </article>
+    <script id="hotspotData" type="application/json">{{ hotspot_zones | tojson }}</script>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="complaintSnapshot">Complaint snapshot</h3><p data-i18n="complaintCountsHint">Current citizen report status counts.</p></div><a href="{{ url_for('complaints_page') }}" class="mini-tag" data-i18n="manageReports">Manage reports</a></div>
+        <div class="risk-counts">
+            <div class="risk-count"><strong>{{ complaint_summary.total }}</strong><span data-i18n="totalComplaints">Total complaints</span></div>
+            <div class="risk-count medium"><strong>{{ complaint_summary.pending }}</strong><span data-i18n="pendingComplaints">Pending complaints</span></div>
+            <div class="risk-count low"><strong>{{ complaint_summary.resolved }}</strong><span data-i18n="resolvedComplaints">Resolved complaints</span></div>
+        </div>
+    </article>
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="recentReports">Recent reports</h3><p data-i18n="recentReportsHint">Latest reports submitted by citizens.</p></div><a href="{{ url_for('track_complaint') }}" class="mini-tag" data-i18n="trackNavShort">Track report</a></div>
+        <div class="priority-list">
+            {% for complaint in recent_complaints[:4] %}
+            <a class="priority-item" href="{{ url_for('track_complaint', complaint_id=complaint.complaint_id) }}">
+                <span><span class="priority-name">{{ complaint.street }}</span><br><span class="priority-meta">{{ complaint.category }} · {{ complaint.submitted_at[:10] }}</span></span>
+                <span class="status-pill {{ complaint.status|lower|replace(' ', '-') }}" data-status="{{ complaint.status }}">{{ complaint.status }}</span>
+            </a>
+            {% else %}
+            <p class="form-hint" data-i18n="noReports">No complaints have been submitted yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+
+<section class="section"><div class="notice"><strong data-i18n="importantNote">Important prototype note:</strong> <span data-i18n="disclaimer">Risk scores use fictional demonstration data and transparent rules; they are not methane measurements or validated predictions.</span></div></section>
+{% endblock %}

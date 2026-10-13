@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div>
+            <h2>{{ location.name }}</h2>
+            <p data-i18n="locationProfileSubtitle">Operational profile and risk details for this collection zone.</p>
+        </div>
+        <a class="mini-tag" href="{{ url_for('municipality_locations_page') }}" data-i18n="backToLocations">Back to locations</a>
+    </div>
+
+    <div class="kpis">
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="riskScore">Risk score</span><span class="kpi-icon">⚠️</span></div><div class="kpi-value">{{ risk[0] }}</div><div class="kpi-foot"><span data-risk="{{ risk[1] }}">{{ risk[1] }}</span> <span data-i18n="riskLevelSuffix">risk level</span></div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="wasteLabel">Waste</span><span class="kpi-icon">🗑️</span></div><div class="kpi-value">{{ location.estimated_total_waste_kg_per_day or 0 }}</div><div class="kpi-foot" data-i18n="wasteUnit">kg/day</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="organicShare">Organic share</span><span class="kpi-icon">🍃</span></div><div class="kpi-value">{{ location.organic_waste_percentage or 0 }}%</div><div class="kpi-foot" data-i18n="organicWastePercentage">Organic waste percentage</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="collectionInterval">Collection interval</span><span class="kpi-icon">🗓️</span></div><div class="kpi-value">{{ location.collection_frequency_days or 0 }}</div><div class="kpi-foot" data-i18n="days">days</div></article>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="locationInformation">Location information</h3></div></div>
+        {% set location_type_translation_keys = {"junction": "locationTypeJunction", "street": "locationTypeStreet", "ward": "locationTypeWard", "market": "locationTypeMarket", "residential area": "locationTypeResidential", "other": "locationTypeOther"} %}
+        <div class="priority-list">
+            <div class="priority-item"><span data-i18n="typeLabel">Type</span><strong data-i18n="{{ location_type_translation_keys[location.location_type] }}">{{ location.location_type }}</strong></div>
+            <div class="priority-item"><span data-i18n="wardOrZone">Ward or zone</span><strong>{% if location.ward_or_zone %}{{ location.ward_or_zone }}{% else %}<span data-i18n="notProvided">Not provided</span>{% endif %}</strong></div>
+            <div class="priority-item"><span data-i18n="coordinates">Coordinates</span><strong>{% if location.latitude is not none and location.longitude is not none %}{{ location.latitude }}, {{ location.longitude }}{% else %}<span data-i18n="unavailable">Unavailable</span>{% endif %}</strong></div>
+            <div class="priority-item"><span data-i18n="lastCollection">Last collection</span><strong>{% if location.last_collection_at %}{{ location.last_collection_at }}{% else %}<span data-i18n="unavailable">Unavailable</span>{% endif %}</strong></div>
+            <div class="priority-item"><span data-i18n="fillLevel">Fill level</span><strong>{% if location.fill_level_percentage is not none %}{{ location.fill_level_percentage }}%{% else %}<span data-i18n="unavailable">Unavailable</span>{% endif %}</strong></div>
+            <div class="priority-item"><span data-i18n="segregationEfficiency">Segregation efficiency</span><strong>{% if location.segregation_efficiency_percentage is not none %}{{ location.segregation_efficiency_percentage }}%{% else %}<span data-i18n="unavailable">Unavailable</span>{% endif %}</strong></div>
+            <div class="priority-item"><span data-i18n="statusLabel">Status</span><strong data-status="{{ location.status }}">{{ location.status }}</strong></div>
+            <div class="priority-item"><span data-i18n="dataSource">Data source</span><strong>{{ location.data_source }}</strong></div>
+        </div>
+    </article>
+
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="recommendedActions">Recommended actions</h3></div></div>
+        <ul class="recommendations">
+            {% set recs = [('Continue monitoring', 'continueMonitoring'), ('Review scheduling', 'reviewScheduling'), ('Prioritise collection', 'prioritiseCollectionAction')] %}
+            {% for label, key in recs %}
+            <li data-i18n="{{ key }}">{{ label }}</li>
+            {% endfor %}
+        </ul>
+        <p class="small-note" data-i18n="riskMethodNote">Risk calculations use the same transparent rule-based logic used elsewhere in the application. They do not represent calibrated methane measurements.</p>
+    </article>
+</section>
+
+<section class="section">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="relatedComplaints">Related complaints</h3><p data-i18n="relatedComplaintsDescription">Historical complaint records tied to this location.</p></div></div>
+        {% if related_complaints %}
+        <div class="priority-list">
+            {% for complaint in related_complaints %}
+            <div class="priority-item"><span><span class="priority-name" data-category="{{ complaint.category }}">{{ complaint.category }}</span><br><span class="priority-meta">{{ complaint.submitted_at[:10] }}</span></span><span class="status-pill {{ complaint.status|lower|replace(' ', '-') }}" data-status="{{ complaint.status }}">{{ complaint.status }}</span></div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="form-hint" data-i18n="noComplaintHistory">No complaint history was found for this location.</p>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

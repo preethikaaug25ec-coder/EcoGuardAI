@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div><h2 data-i18n="complaintsHeading">Citizen complaints</h2><p data-i18n="complaintsSubtitle">Report local waste concerns and review recent community reports.</p></div>
+        <a class="btn secondary" href="{{ url_for('admin_dashboard') }}" data-i18n="adminLink">Administrator sign in</a>
+    </div>
+    <div class="complaint-kpis">
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="totalComplaints">Total complaints</span><span class="kpi-icon">📋</span></div><div class="kpi-value">{{ complaint_summary.total }}</div><div class="kpi-foot" data-i18n="communityReports">Community reports received</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="pendingComplaints">Pending complaints</span><span class="kpi-icon">⏳</span></div><div class="kpi-value">{{ complaint_summary.pending }}</div><div class="kpi-foot" data-i18n="awaitingReview">Awaiting review or action</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="resolvedComplaints">Resolved complaints</span><span class="kpi-icon">✓</span></div><div class="kpi-value">{{ complaint_summary.resolved }}</div><div class="kpi-foot" data-i18n="completedReports">Marked as resolved</div></article>
+    </div>
+</section>
+
+<section class="section complaint-layout">
+    <article class="card complaint-card">
+        <h3 data-i18n="submitReport">Submit a waste report</h3>
+        <p data-i18n="formHelp">Provide enough detail for the local team to identify and review the issue.</p>
+        <form class="complaint-fields" action="{{ url_for('submit_complaint') }}" method="post" enctype="multipart/form-data" id="complaintForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div><label for="citizenName" data-i18n="citizenName">Your name</label><input id="citizenName" name="citizen_name" type="text" minlength="2" maxlength="100" autocomplete="name" required></div>
+            <div><label for="complaintStreet" data-i18n="complaintStreet">Street or neighbourhood</label><input id="complaintStreet" name="street" type="text" minlength="2" maxlength="120" required></div>
+            <div>
+                <label for="complaintCategory" data-i18n="categoryLabel">Waste problem category</label>
+                <select id="complaintCategory" name="category" required>
+                    <option value="" data-i18n="chooseCategory">Choose a category</option>
+                    <option value="Overflowing waste" data-i18n="catOverflow">Overflowing waste</option>
+                    <option value="Illegal dumping" data-i18n="catDumping">Illegal dumping</option>
+                    <option value="Missed collection" data-i18n="catMissed">Missed collection</option>
+                    <option value="Mixed or unsorted waste" data-i18n="catMixed">Mixed or unsorted waste</option>
+                    <option value="Hazardous waste" data-i18n="catHazardous">Hazardous waste</option>
+                    <option value="Other" data-i18n="catOther">Other</option>
+                </select>
+            </div>
+            <div><label for="complaintDescription" data-i18n="descriptionLabel">Description</label><textarea id="complaintDescription" name="description" minlength="10" maxlength="2000" required></textarea></div>
+            <div><label for="complaintPhoto" data-i18n="photoOptional">Photo (optional)</label><input id="complaintPhoto" name="photo" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"><p class="form-hint" data-i18n="photoHelp">JPEG, PNG, or WebP; maximum 5 MB.</p></div>
+            <button class="btn" type="submit" data-i18n="submitComplaint">Submit complaint</button>
+        </form>
+    </article>
+
+    <article class="card complaint-card">
+        <div class="panel-title"><div><h3 data-i18n="recentReports">Recent reports</h3><p data-i18n="recurringIntro">Streets with two or more reports are listed as recurring.</p></div></div>
+        <div class="table-scroll">
+            <table class="complaint-table">
+                <thead><tr><th data-i18n="streetName">STREET</th><th data-i18n="categoryLabel">CATEGORY</th><th data-i18n="dateLabel">DATE</th><th data-i18n="statusLabel">STATUS</th></tr></thead>
+                <tbody>
+                {% for complaint in recent_complaints %}
+                <tr><td>{{ complaint.street }}</td><td data-category="{{ complaint.category }}">{{ complaint.category }}</td><td>{{ complaint.submitted_at[:10] }}</td><td><a href="{{ url_for('track_complaint', complaint_id=complaint.complaint_id) }}" class="status-pill {{ complaint.status|lower|replace(' ', '-') }}" data-status="{{ complaint.status }}">{{ complaint.status }}</a></td></tr>
+                {% else %}
+                <tr><td colspan="4" data-i18n="noReports">No complaints have been submitted yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="recurring-list">
+            <strong data-i18n="recurringComplaints">Recurring complaint streets</strong>
+            {% for item in recurring_complaints %}
+            <div class="recurring-item"><span>{{ item.street }}</span><strong>{{ item.complaint_count }} <span data-i18n="reportsCount">reports</span></strong></div>
+            {% else %}
+            <p class="form-hint" data-i18n="noRecurring">No street has multiple reports yet.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}

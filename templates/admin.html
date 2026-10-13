@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div><h2 data-i18n="adminPageTitle">Complaint administration</h2><p data-i18n="adminPageDescription">Review citizen reports and update their status.</p></div>
+        <form method="post" action="{{ url_for('admin_logout') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="btn secondary" type="submit" data-i18n="signOut">Sign out</button>
+        </form>
+    </div>
+    <div class="card table-scroll">
+        <table class="complaint-table">
+            <thead><tr>
+                <th data-i18n="complaintId">Complaint ID</th><th data-i18n="citizenName">Name</th>
+                <th data-i18n="complaintStreet">Street</th><th data-i18n="categoryLabel">Category</th>
+                <th data-i18n="descriptionLabel">Description</th><th data-i18n="dateLabel">Submitted</th>
+                <th data-i18n="statusLabel">Status</th><th data-i18n="updateStatus">Update status</th>
+            </tr></thead>
+            <tbody>
+            {% for complaint in complaints %}
+            <tr>
+                <td>{{ complaint.complaint_id }}</td>
+                <td>{{ complaint.citizen_name }}</td>
+                <td>{{ complaint.street }}</td>
+                <td data-category="{{ complaint.category }}">{{ complaint.category }}</td>
+                <td>{{ complaint.description }}</td>
+                <td>{{ complaint.submitted_at[:16].replace('T', ' ') }}</td>
+                <td><span data-status="{{ complaint.status }}">{{ complaint.status }}</span></td>
+                <td>
+                    <form class="table-tools" method="post" action="{{ url_for('update_status', complaint_id=complaint.complaint_id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <select name="status" aria-label="Status for {{ complaint.complaint_id }}" data-i18n-aria="statusForComplaint">
+                            {% for status in statuses %}
+                            <option value="{{ status }}" {% if status == complaint.status %}selected{% endif %} data-status="{{ status }}">{{ status }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn" type="submit" data-i18n="saveStatus">Save</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8" data-i18n="noReports">No complaints have been submitted.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

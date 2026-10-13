@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div><h2 data-i18n="riskPageTitle">Street-level risk monitoring</h2><p data-i18n="riskPageDescription">Review transparent demonstration scores and suggested collection actions.</p></div>
+        <span class="mini-tag" data-i18n="ruleEstimate">Rule-based estimates</span>
+    </div>
+    <div class="risk-counts">
+        <div class="risk-count high"><strong>{{ high_risk_count }}</strong><span data-i18n="high">High risk</span></div>
+        <div class="risk-count medium"><strong>{{ medium_risk_count }}</strong><span data-i18n="medium">Medium risk</span></div>
+        <div class="risk-count low"><strong>{{ low_risk_count }}</strong><span data-i18n="low">Low risk</span></div>
+    </div>
+</section>
+
+<section class="section">
+    <article class="card panel">
+        <div class="panel-title">
+            <div><h3 data-i18n="mapTitle">Waste hotspot map</h3><p data-i18n="mapRiskSubtitle">Locate zones that need urgent collection attention.</p></div>
+            <div class="map-filters" data-i18n-aria="mapTitle" aria-label="Map risk filters">
+                <button class="map-filter active" type="button" data-zone-filter="all" data-i18n="mapFilterAll">All</button>
+                <button class="map-filter" type="button" data-zone-filter="High" data-i18n="riskHigh">High</button>
+                <button class="map-filter" type="button" data-zone-filter="Medium" data-i18n="riskMedium">Medium</button>
+                <button class="map-filter" type="button" data-zone-filter="Low" data-i18n="riskLow">Low</button>
+            </div>
+        </div>
+        <div class="map-shell">
+            <div id="hotspotMap" data-i18n-aria="mapTitle" aria-label="Waste hotspot map" class="risk-map"></div>
+            <div id="mapLoading" class="map-state" data-i18n="mapLoading">Loading hotspot map...</div>
+            <div id="mapEmptyState" class="map-state hidden" data-i18n="mapEmpty">No risk zones match the filter.</div>
+            <div id="mapFallback" class="map-fallback hidden" data-i18n="mapTilesUnavailable">Map tiles are unavailable. Street priorities are still listed below.</div>
+        </div>
+        <div class="map-legend" aria-label="Hotspot legend">
+            <span><i class="legend-dot red"></i><span data-i18n="mapLegendHigh">High risk</span></span>
+            <span><i class="legend-dot amber"></i><span data-i18n="mapLegendMedium">Medium risk</span></span>
+            <span><i class="legend-dot green"></i><span data-i18n="mapLegendLow">Low risk</span></span>
+        </div>
+    </article>
+    <script id="hotspotData" type="application/json">{{ hotspot_zones | tojson }}</script>
+</section>
+
+<section class="section">
+    <div class="section-head">
+        <div><h2 data-i18n="streetMonitoring">Street monitoring</h2><p data-i18n="streetSubtitle">Search and compare the example street records.</p></div>
+        <div class="table-tools">
+            <input id="streetSearch" class="search" type="search" placeholder="Search streets..." data-i18n-placeholder="searchPlaceholder" data-i18n-aria="searchPlaceholder" aria-label="Search streets">
+            <button class="btn secondary" id="exportCsv" type="button">↓ <span data-i18n="exportCsv">Export CSV</span></button>
+        </div>
+    </div>
+    <div class="card table-scroll">
+        <table>
+            <thead><tr>
+                <th data-i18n="streetName">STREET</th><th data-i18n="wasteCol">WASTE</th>
+                <th data-i18n="organicCol">ORGANIC</th><th data-i18n="delayCol">DELAY (DAYS)</th>
+                <th data-i18n="scoreCol">RISK SCORE</th><th data-i18n="levelCol">RISK LEVEL</th>
+            </tr></thead>
+            <tbody id="streetTableBody"></tbody>
+        </table>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="collectionPriorities">Collection priorities</h3><p data-i18n="riskMonitorSubtitle">Street conditions ranked by the prototype scoring rules.</p></div></div>
+        <div class="priority-list" id="priorityList"></div>
+    </article>
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="recommendationsTitle">Recommended next actions</h3><p data-i18n="recommendationsDescription">Suggestions follow directly from each street's recorded conditions.</p></div></div>
+        <div class="priority-list">
+            {% for street in streets|sort(attribute='risk_score', reverse=true) %}
+            <div class="priority-item"><span><span class="priority-name">{{ street.street }}</span><br><span class="priority-meta">{{ street.risk_level }} · {{ street.risk_score }}/100</span></span><span class="priority-meta">{% if street.risk_level == 'High' %}<span data-i18n="recommendHigh">Prioritise collection and inspect promptly.</span>{% elif street.risk_level == 'Medium' %}<span data-i18n="recommendMedium">Plan collection soon and monitor.</span>{% else %}<span data-i18n="recommendLow">Continue regular collection and monitoring.</span>{% endif %}</span></div>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+<section class="section"><div class="notice"><strong data-i18n="importantNote">Important prototype note:</strong> <span data-i18n="disclaimer">Scores are illustrative rule-based estimates and are not measured environmental readings.</span></div></section>
+{% endblock %}

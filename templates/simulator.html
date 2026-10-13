@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div><h2 data-i18n="simulatorHeading">What-If Simulator</h2><p data-i18n="simulatorSubtitle">Change a street's conditions and see how the rule-based risk score responds.</p></div>
+        <span class="mini-tag" data-i18n="interactive">Interactive</span>
+    </div>
+    <div class="card simulator">
+        <div class="simulator-banner"><h3 data-i18n="simulateTitle">Explore a better collection decision</h3><p data-i18n="simulateDescription">Adjust the inputs below. Your experiment changes only the simulation, not the original dashboard records.</p></div>
+        <div class="simulator-body">
+            <div class="form-fields">
+                <div class="field"><label for="simStreet" data-i18n="selectStreet">Select street</label><select id="simStreet">{% for street in streets %}<option value="{{ street.street }}">{{ street.street }}</option>{% endfor %}</select></div>
+                <div class="field"><label for="wasteRange"><span data-i18n="wasteQuantity">Total waste quantity</span><output id="wasteOutput">85</output></label><input id="wasteRange" type="range" min="0" max="1000" step="5" value="85"><div class="range-ends"><span>0</span><span data-i18n="illustrativeUnits">Illustrative units</span><span>1000</span></div></div>
+                <div class="field"><label for="organicRange"><span data-i18n="organicQuantity">Organic waste quantity</span><output id="organicOutput">65</output></label><input id="organicRange" type="range" min="0" max="200" step="5" value="65"><div class="range-ends"><span>0</span><span data-i18n="organicMustFit">Cannot exceed total waste</span><span id="organicMax">85</span></div></div>
+                <div class="field"><label for="delayRange"><span data-i18n="collectionDelay">Collection delay</span><output id="delayOutput">2 days</output></label><input id="delayRange" type="range" min="0" max="30" step="1" value="2"><div class="range-ends"><span data-i18n="noDelay">No delay</span><span>30 <span data-i18n="days">days</span></span></div></div>
+                <button class="btn" id="resetSimulator" type="button">↺ <span data-i18n="resetScenario">Reset to street values</span></button>
+            </div>
+            <div class="sim-result" aria-live="polite">
+                <div class="result-top"><span data-i18n="estimatedRiskScore">Estimated risk score</span><span id="simRiskPill" class="risk-pill medium">Medium</span></div>
+                <div class="score"><span id="simScore">70</span><small> / 100</small></div>
+                <div class="meter"><div class="meter-fill" id="meterFill"></div></div>
+                <div class="comparison" id="comparisonText" data-i18n="calculating">Calculating scenario...</div>
+                <div class="recommend-title" data-i18n="recommendedActions">Recommended actions</div>
+                <ul class="recommendations" id="recommendations"></ul>
+                <p class="small-note" data-i18n="simNote">This is a demonstration score based on simple rules. It does not measure methane, forecast actual emissions, or replace an environmental assessment.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

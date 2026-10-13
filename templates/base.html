@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#103b2d">
+    <meta name="description" content="EcoGuard AI environmental intelligence platform">
+    <title data-i18n-title="{{ page_heading_key }}">{{ page_title }} | EcoGuard AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ecoguard.css', v='20261012-i18n') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <a class="brand" href="{{ url_for('dashboard') }}" aria-label="EcoGuard AI overview">
+            <div class="brand-icon">♻</div>
+            <div>
+                <div class="brand-name">EcoGuard AI</div>
+                <div class="brand-sub">Environmental intelligence</div>
+            </div>
+        </a>
+
+        <div>
+            <p class="nav-label" data-i18n="workspace">Workspace</p>
+            <nav class="nav" aria-label="Main navigation">
+                <a class="{{ 'active' if active_page == 'overview' else '' }}" href="{{ url_for('dashboard') }}" {% if active_page == 'overview' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">⌂</span><span data-i18n="overview">Overview</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'analytics' else '' }}" href="{{ url_for('analytics') }}" {% if active_page == 'analytics' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">▥</span><span data-i18n="analytics">Analytics</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'risk' else '' }}" href="{{ url_for('risk_monitor') }}" {% if active_page == 'risk' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">◉</span><span data-i18n="riskMonitoring">Risk monitoring</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'complaints' else '' }}" href="{{ url_for('complaints_page') }}" {% if active_page == 'complaints' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">✎</span><span data-i18n="complaintsNav">Citizen complaints</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'tracking' else '' }}" href="{{ url_for('track_complaint') }}" {% if active_page == 'tracking' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">⌕</span><span data-i18n="trackingNav">Track a complaint</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'simulator' else '' }}" href="{{ url_for('simulator_page') }}" {% if active_page == 'simulator' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">⌁</span><span data-i18n="simulator">What-If Simulator</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'municipality' else '' }}" href="{{ url_for('municipality_locations_page') }}" {% if active_page == 'municipality' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">▣</span><span data-i18n="municipalityNav">Municipality management</span>
+                </a>
+                <a class="{{ 'active' if active_page == 'admin' else '' }}" href="{{ url_for('admin_dashboard') }}" {% if active_page == 'admin' %}aria-current="page"{% endif %}>
+                    <span class="nav-icon">⚙</span><span data-i18n="adminNav">Admin management</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-bottom">
+            <strong>🌱 <span data-i18n="smallChanges">Small changes matter</span></strong>
+            <p data-i18n="sidebarNote">Timely waste collection and better organic waste handling can support cleaner neighbourhoods.</p>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <div>
+                <div class="eyebrow" data-i18n="controlCenter">Environmental control center</div>
+                <h1 data-i18n="{{ page_heading_key }}">{{ page_title }}</h1>
+                <p class="subtitle" data-i18n="{{ page_subtitle_key }}">{{ page_subtitle }}</p>
+            </div>
+            <div class="top-actions">
+                <div class="notification-wrap">
+                    <button class="notification-trigger" id="notificationBell" type="button" data-i18n-aria="openNotifications" aria-label="Open notifications" aria-controls="notificationPanel" aria-expanded="false">
+                        <span aria-hidden="true">🔔</span>
+                        <span class="notification-badge" id="notificationBadge">{{ notification_summary.unread or 0 }}</span>
+                    </button>
+                    <div class="notification-panel" id="notificationPanel" role="region" data-i18n-aria="notificationsTitle" aria-label="Notifications" hidden>
+                        <div class="notification-header">
+                            <strong data-i18n="notificationsTitle">Notifications</strong>
+                            <button class="link-button" id="markAllRead" type="button" data-i18n="markAllRead">Mark all read</button>
+                        </div>
+                        <div class="notification-list">
+                            {% for notification in notifications[:6] %}
+                            <button class="notification-item {{ 'unread' if notification.is_read == 0 else 'read' }}" type="button" data-notification-id="{{ notification.notification_id }}" data-event-type="{{ notification.event_type }}" data-related-zone="{{ notification.related_zone or '' }}" data-notification-status="{{ notification.message.split(' is now marked as ')[-1].rstrip('.') if notification.event_type == 'complaint_status_change' else '' }}">
+                                <span class="notification-severity {{ notification.notification_level }}" data-i18n="severity{{ notification.notification_level|title }}">{{ notification.notification_level|title }}</span>
+                                <div>
+                                    <strong class="notification-title">{{ notification.title }}</strong>
+                                    <p class="notification-message">{{ notification.message }}</p>
+                                    <small>{{ notification.created_at[:10] }}{% if notification.related_zone %} · {{ notification.related_zone }}{% endif %}</small>
+                                </div>
+                            </button>
+                            {% else %}
+                            <div class="notification-empty" data-i18n="noNotifications">No notifications yet.</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <select id="languageSelect" class="language" data-i18n-aria="selectLanguage" aria-label="Choose language">
+                    <option value="en">🇬🇧 English</option>
+                    <option value="ta">🇮🇳 தமிழ்</option>
+                    <option value="hi">🇮🇳 हिन्दी</option>
+                </select>
+                <div class="status"><span class="status-dot"></span><span data-i18n="demoMode">Illustrative data</span></div>
+            </div>
+        </header>
+
+        {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="notice {{ category }}" role="status" data-flash-message="{{ message }}">{{ message }}</div>
+        {% endfor %}
+
+        {% block content %}{% endblock %}
+
+        <footer>
+            <span>© 2026 EcoGuard AI · <span data-i18n="smartWaste">Environmental intelligence prototype</span></span>
+            <span data-i18n="builtFor">Designed for cleaner, more informed cities.</span>
+        </footer>
+    </main>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script id="ecoGuardData" type="application/json">{{ streets | default([], true) | tojson }}</script>
+<script src="{{ url_for('static', filename='js/ecoguard.js', v='20261013-municipality-i18n-complete') }}" defer></script>
+{% block page_scripts %}{% endblock %}
+</body>
+</html>

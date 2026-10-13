@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head"><div><h2 data-i18n="trackHeading">Track a complaint</h2><p data-i18n="trackSubtitle">Enter the complaint ID you received after submitting a report.</p></div></div>
+    <article class="card tracking-card">
+        <form class="tracking-form" action="{{ url_for('track_complaint') }}" method="get">
+            <label class="sr-only" for="trackComplaintId" data-i18n="complaintId">Complaint ID</label>
+            <input id="trackComplaintId" name="complaint_id" value="{{ tracking_id }}" placeholder="e.g. EG-ABC123DEF4567890ABCDEF1234567890" pattern="EG-[A-Fa-f0-9]{32}" maxlength="35" required>
+            <button class="btn" type="submit" data-i18n="trackButton">Check status</button>
+        </form>
+        {% if submitted_id %}
+        <div class="notice success" role="status"><p><span data-i18n="submittedMessage">Your complaint was submitted. Save this ID:</span> <strong>{{ submitted_id }}</strong></p></div>
+        {% endif %}
+        {% if tracking_error %}
+        <div class="notice error" role="alert" data-i18n="invalidComplaint">We couldn't find that complaint ID. Check it and try again.</div>
+        {% endif %}
+        {% if tracked_complaint %}
+        <div class="tracking-result" aria-live="polite">
+            <strong data-i18n="trackingDetails">Complaint details</strong>
+            <dl>
+                <div><dt data-i18n="complaintId">Complaint ID</dt><dd>{{ tracked_complaint.complaint_id }}</dd></div>
+                <div><dt data-i18n="citizenName">Name</dt><dd>{{ tracked_complaint.citizen_name }}</dd></div>
+                <div><dt data-i18n="complaintStreet">Street</dt><dd>{{ tracked_complaint.street }}</dd></div>
+                <div><dt data-i18n="categoryLabel">Category</dt><dd data-category="{{ tracked_complaint.category }}">{{ tracked_complaint.category }}</dd></div>
+                <div><dt data-i18n="dateLabel">Submitted</dt><dd>{{ tracked_complaint.submitted_at[:10] }}</dd></div>
+                <div><dt data-i18n="statusLabel">Status</dt><dd><span class="status-pill {{ tracked_complaint.status|lower|replace(' ', '-') }}" data-status="{{ tracked_complaint.status }}">{{ tracked_complaint.status }}</span></dd></div>
+                <div><dt data-i18n="descriptionLabel">Description</dt><dd>{{ tracked_complaint.description }}</dd></div>
+            </dl>
+        </div>
+        {% endif %}
+    </article>
+</section>
+{% endblock %}

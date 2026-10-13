@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section">
+    <div class="section-head">
+        <div>
+            <h2 data-i18n="municipalityPageTitle">Municipality location management</h2>
+            <p data-i18n="municipalityPageSubtitle">Review active collection zones and add new municipal locations to the shared operational database.</p>
+        </div>
+        <span class="mini-tag" data-i18n="liveDatabase">Live database</span>
+    </div>
+    <div class="kpis">
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="totalLocations">Total locations</span><span class="kpi-icon">📍</span></div><div class="kpi-value">{{ summary.total or 0 }}</div><div class="kpi-foot" data-i18n="totalLocationsFoot">Registered operational sites</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="activeLocations">Active</span><span class="kpi-icon">✅</span></div><div class="kpi-value">{{ summary.active or 0 }}</div><div class="kpi-foot" data-i18n="activeLocationsFoot">Available for routing and risk analysis</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="highRiskLocations">High-risk</span><span class="kpi-icon">⚠️</span></div><div class="kpi-value">{{ summary.high_risk or 0 }}</div><div class="kpi-foot" data-i18n="highRiskFoot">Priority collection candidates</div></article>
+        <article class="card kpi"><div class="kpi-top"><span class="kpi-label" data-i18n="needsAttentionLocations">Needs attention</span><span class="kpi-icon">🛠️</span></div><div class="kpi-value">{{ summary.needs_attention or 0 }}</div><div class="kpi-foot" data-i18n="needsAttentionFoot">Review collection frequency and fill levels</div></article>
+    </div>
+</section>
+
+<section class="section grid-two">
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="addNewLocationTitle">Add a new location</h3><p data-i18n="addNewLocationSubtitle">Store location data in SQLite so it is immediately available across the platform.</p></div></div>
+        <form method="post" action="{{ url_for('municipality_locations_page') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <div class="form-fields">
+                <div class="field"><label for="name" data-i18n="locationName">Location name</label><input id="name" name="name" required maxlength="120" placeholder="Anna Nagar Junction" data-i18n-placeholder="locationNamePlaceholder"></div>
+                <div class="field"><label for="location_type" data-i18n="locationTypeLabel">Location type</label><select id="location_type" name="location_type" required>
+                    {% set location_type_translation_keys = {"junction": "locationTypeJunction", "street": "locationTypeStreet", "ward": "locationTypeWard", "market": "locationTypeMarket", "residential area": "locationTypeResidential", "other": "locationTypeOther"} %}
+                    {% for option in location_types %}<option value="{{ option }}" data-i18n="{{ location_type_translation_keys[option] }}">{{ option }}</option>{% endfor %}
+                </select></div>
+                <div class="field"><label for="ward_or_zone" data-i18n="wardOrZone">Ward or zone identifier</label><input id="ward_or_zone" name="ward_or_zone" required maxlength="100" data-i18n-placeholder="wardOrZonePlaceholder"></div>
+                <div class="field"><label for="estimated_total_waste_kg_per_day" data-i18n="estimatedWasteField">Estimated total waste (kg/day)</label><input id="estimated_total_waste_kg_per_day" name="estimated_total_waste_kg_per_day" type="number" min="0" step="0.1" required></div>
+                <div class="field"><label for="organic_waste_percentage" data-i18n="organicWasteField">Organic waste (%)</label><input id="organic_waste_percentage" name="organic_waste_percentage" type="number" min="0" max="100" step="0.1" required></div>
+                <div class="field"><label for="collection_frequency_days" data-i18n="collectionFrequencyField">Collection frequency (days)</label><input id="collection_frequency_days" name="collection_frequency_days" type="number" min="1" step="1" required></div>
+                <div class="field"><label for="latitude" data-i18n="latitudeLabel">Latitude</label><input id="latitude" name="latitude" type="number" min="-90" max="90" step="0.000001"></div>
+                <div class="field"><label for="longitude" data-i18n="longitudeLabel">Longitude</label><input id="longitude" name="longitude" type="number" min="-180" max="180" step="0.000001"></div>
+                <div class="field"><label for="last_collection_at" data-i18n="lastCollectionField">Last collection date and time</label><input id="last_collection_at" name="last_collection_at" type="datetime-local"></div>
+                <div class="field"><label for="fill_level_percentage" data-i18n="fillLevelField">Fill level (%)</label><input id="fill_level_percentage" name="fill_level_percentage" type="number" min="0" max="100" step="0.1"></div>
+                <div class="field"><label for="overflow_history" data-i18n="overflowHistoryField">Overflow incidents</label><input id="overflow_history" name="overflow_history" placeholder="e.g. 2 moderate overflows" data-i18n-placeholder="overflowHistoryPlaceholder"></div>
+                <div class="field"><label for="segregation_efficiency_percentage" data-i18n="segregationEfficiencyField">Segregation efficiency (%)</label><input id="segregation_efficiency_percentage" name="segregation_efficiency_percentage" type="number" min="0" max="100" step="0.1"></div>
+                <div class="field full"><label for="notes" data-i18n="notesLabel">Notes</label><textarea id="notes" name="notes" rows="3" maxlength="500" data-i18n-placeholder="notesPlaceholder"></textarea></div>
+            </div>
+            <button class="btn" type="submit" data-i18n="addLocationButton">Add location</button>
+        </form>
+    </article>
+
+    <article class="card panel">
+        <div class="panel-title"><div><h3 data-i18n="registeredLocationsTitle">Registered locations</h3><p data-i18n="registeredLocationsSubtitle">Search, review, and deactivate locations without deleting historical records.</p></div></div>
+        <form method="get" action="{{ url_for('municipality_locations_page') }}" class="filter-row" style="display:flex; gap:0.75rem; margin-bottom:1rem; flex-wrap: wrap;">
+            <input type="search" name="q" value="{{ search_term or '' }}" data-i18n-placeholder="searchLocationPlaceholder" data-i18n-aria="searchLocations" aria-label="Search locations">
+            <select name="status" data-i18n-aria="filterStatus" aria-label="Filter by status">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %} data-i18n="allStatuses">All statuses</option>
+                <option value="Active" {% if status_filter == 'Active' %}selected{% endif %} data-i18n="statusActive">Active</option>
+                <option value="Inactive" {% if status_filter == 'Inactive' %}selected{% endif %} data-i18n="statusInactive">Inactive</option>
+            </select>
+            <button class="btn alt" type="submit" data-i18n="applyFilters">Apply filters</button>
+        </form>
+        <div class="priority-list">
+            {% for location in locations %}
+            <div class="priority-item">
+                <span>
+                    <span class="priority-name">{{ location.name }}</span><br>
+                    <span class="priority-meta"><span data-i18n="{{ location_type_translation_keys[location.location_type] }}">{{ location.location_type }}</span> · {{ location.ward_or_zone }} · <span data-status="{{ location.status }}">{{ location.status }}</span></span>
+                </span>
+                <div>
+                    <a class="mini-tag" href="{{ url_for('municipality_location_detail', location_id=location.location_id) }}" data-i18n="detailAction">Detail</a>
+                    <form method="post" action="{{ url_for('municipality_location_deactivate', location_id=location.location_id) }}" style="display:inline; margin-left: 0.5rem;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                        <button class="link-button" type="submit" onclick="return confirm(this.dataset.confirmMessage)" data-i18n="deactivateAction" data-i18n-confirm="deactivateConfirm">Deactivate</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <p class="form-hint" data-i18n="noLocationsMatch">No locations match the current search or filter.</p>
+            {% endfor %}
+        </div>
+    </article>
+</section>
+{% endblock %}
